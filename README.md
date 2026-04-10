@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ### 3. Download the CADICA dataset manually
 
-1. Go to https://www.kaggle.com/datasets/arejimenezpartinen/cadica
+1. Go to [https://www.kaggle.com/datasets/arejimenezpartinen/cadica](https://www.kaggle.com/datasets/ariadnapartinen/cadica-a-new-dataset-for-coronary-artery-disease)
 2. Click **Download** (free Kaggle account required)
 3. Unzip into `data/cadica/` so the structure looks like:
 
