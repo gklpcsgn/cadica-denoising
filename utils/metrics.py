@@ -13,7 +13,6 @@ Also provides ``time_inference`` to benchmark model throughput (ms / frame).
 
 from __future__ import annotations
 
-import math
 import time
 from typing import Callable
 
@@ -47,7 +46,7 @@ def psnr(
     mse = F.mse_loss(pred.float(), target.float(), reduction="mean")
     if mse == 0:
         return torch.tensor(float("inf"))
-    return 10.0 * torch.log10(torch.tensor(data_range**2) / mse)
+    return 10.0 * torch.log10(mse.new_tensor(data_range**2) / mse)
 
 
 def psnr_batch(
@@ -66,7 +65,7 @@ def psnr_batch(
     mse_per_sample = ((pred_f - target_f) ** 2).mean(dim=1)
     # Avoid log(0) for identical images
     mse_per_sample = mse_per_sample.clamp(min=1e-10)
-    return 10.0 * torch.log10(torch.tensor(data_range**2) / mse_per_sample)
+    return 10.0 * torch.log10(mse_per_sample.new_tensor(data_range**2) / mse_per_sample)
 
 
 # ---------------------------------------------------------------------------
@@ -84,8 +83,8 @@ def _gaussian_kernel(window_size: int, sigma: float, device: torch.device) -> to
 def _gaussian_window_2d(window_size: int, sigma: float, channels: int, device: torch.device) -> torch.Tensor:
     """2-D Gaussian window as a depthwise conv kernel (channels, 1, W, W)."""
     k1d = _gaussian_kernel(window_size, sigma, device)
-    k2d = k1d.outer(k1d)                           # (W, W)
-    k2d = k2d.expand(channels, 1, window_size, window_size)
+    k2d = k1d.outer(k1d).unsqueeze(0).unsqueeze(0)              # (1, 1, W, W)
+    k2d = k2d.expand(channels, 1, window_size, window_size).contiguous()
     return k2d
 
 
