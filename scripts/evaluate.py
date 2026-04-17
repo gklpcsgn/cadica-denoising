@@ -1,13 +1,12 @@
 """
 Evaluation script for DnCNN coronary angiography denoising.
 
-Benchmarks four denoising conditions against the CADICA test split and
+Benchmarks three denoising conditions against the CADICA test split and
 reports PSNR, SSIM, and inference time per frame:
 
   1. noisy    — raw noisy input (no processing); establishes a lower bound.
-  2. nlm      — Non-Local Means (cv2.fastNlMeansDenoising); classical baseline.
-  3. single   — DnCNN trained on single-frame input.
-  4. temporal — DnCNN trained on 3-frame temporal input.
+  2. single   — DnCNN trained on single-frame input.
+  3. temporal — DnCNN trained on 3-frame temporal input.
 
 Typical usage::
 
@@ -114,41 +113,6 @@ def _make_loader(
         num_workers=num_workers,
         pin_memory=True,
     )
-
-
-# ---------------------------------------------------------------------------
-# NLM baseline
-# ---------------------------------------------------------------------------
-
-def _nlm_denoise_batch(noisy: torch.Tensor) -> torch.Tensor:
-    """Apply cv2.fastNlMeansDenoising to every frame in a batch.
-
-    Converts each float32 frame in ``[0, 1]`` to uint8, denoises, then
-    converts back to float32.
-
-    Args:
-        noisy: Tensor ``(B, 1, H, W)`` with values in ``[0, 1]``.
-
-    Returns:
-        Denoised tensor ``(B, 1, H, W)`` in ``[0, 1]``.
-    """
-    import cv2
-    import numpy as np
-
-    results = []
-    np_batch = (noisy.squeeze(1).cpu().numpy() * 255.0).clip(0, 255).astype("uint8")
-    for frame in np_batch:
-        denoised = cv2.fastNlMeansDenoising(
-            frame,
-            h=10,
-            templateWindowSize=7,
-            searchWindowSize=21,
-        )
-        results.append(denoised.astype("float32") / 255.0)
-    out = torch.from_numpy(
-        __import__("numpy").stack(results, axis=0)
-    ).unsqueeze(1)                          # (B, 1, H, W)
-    return out
 
 
 # ---------------------------------------------------------------------------
@@ -278,7 +242,6 @@ def _load_model(
 
 _CONDITION_LABELS = {
     "noisy":    "Noisy",
-    "nlm":      "NLM",
     "single":   "Single DnCNN",
     "temporal": "Temporal DnCNN",
 }
@@ -318,7 +281,7 @@ def evaluate_dose(
     device: torch.device,
     results_dir: Path,
 ) -> list[dict[str, Any]]:
-    """Run all four conditions for a single dose level.
+    """Run all three conditions for a single dose level.
 
     Args:
         dose:        Dose level key (``"low25"``, ``"low10"``, or ``"low5"``).
@@ -340,8 +303,7 @@ def evaluate_dose(
     split       = _load_split(split_json, data_dir)
     test_dirs   = split["test"]
 
-    # Build a shared single-frame loader (used for noisy and NLM baselines
-    # and the single-model condition).
+    # Build a shared single-frame loader (used for noisy baseline and single-model condition).
     single_loader = _make_loader(
         test_dirs, "single", dose,
         args.patch_size, args.patches_per_frame,
@@ -374,26 +336,7 @@ def evaluate_dose(
     all_results.append(noisy_result)
 
     # ------------------------------------------------------------------
-    # 2. NLM baseline
-    # ------------------------------------------------------------------
-    print("  Evaluating: nlm …")
-
-    class _NLMWrapper(nn.Module):
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            return _nlm_denoise_batch(x.cpu()).to(x.device)
-
-    nlm_result = _evaluate_condition(
-        condition="nlm",
-        loader=single_loader,
-        predict_fn=lambda x: _nlm_denoise_batch(x.cpu()),
-        device=device,
-        timing_input=timing_noisy.cpu(),    # NLM runs on CPU
-        timing_model=_NLMWrapper(),
-    )
-    all_results.append(nlm_result)
-
-    # ------------------------------------------------------------------
-    # 3. Single DnCNN
+    # 2. Single DnCNN
     # ------------------------------------------------------------------
     print("  Evaluating: single …")
 
@@ -414,7 +357,7 @@ def evaluate_dose(
         print("    [skipped — checkpoint missing]")
 
     # ------------------------------------------------------------------
-    # 4. Temporal DnCNN
+    # 3. Temporal DnCNN
     # ------------------------------------------------------------------
     print("  Evaluating: temporal …")
 

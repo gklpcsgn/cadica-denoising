@@ -41,17 +41,15 @@ import numpy as np
 # Internal constants
 # ---------------------------------------------------------------------------
 
-_CONDITIONS    = ["noisy", "nlm", "single", "temporal"]
+_CONDITIONS    = ["noisy", "single", "temporal"]
 _COL_HEADERS   = {
     "noisy":    "Noisy Input",
-    "nlm":      "NLM",
     "single":   "Single DnCNN",
     "temporal": "Temporal DnCNN",
     "clean":    "Clean (GT)",
 }
 _CONDITION_COLORS = {
     "noisy":    "#9ecae1",
-    "nlm":      "#fdae6b",
     "single":   "#74c476",
     "temporal": "#9e9ac8",
 }
@@ -78,13 +76,13 @@ def save_comparison_grid(
 ) -> None:
     """Save a side-by-side comparison grid of denoising conditions.
 
-    Each row corresponds to one sample; columns show the five conditions
-    (noisy, nlm, single, temporal, clean).  A PSNR annotation is placed
+    Each row corresponds to one sample; columns show the four conditions
+    (noisy, single, temporal, clean).  A PSNR annotation is placed
     below every image except the clean ground-truth column.
 
     Args:
         samples:  List of dicts, one per sample.  Each dict must contain
-                  keys ``"noisy"``, ``"nlm"``, ``"single"``, ``"temporal"``,
+                  keys ``"noisy"``, ``"single"``, ``"temporal"``,
                   and ``"clean"`` — all float32 NumPy arrays of shape ``(H, W)``.
         out_path: Destination PNG path.
         title:    Optional figure-level super-title.
@@ -143,7 +141,8 @@ def save_residual_maps(
 
     Args:
         samples:  List of dicts with the same schema as
-                  :func:`save_comparison_grid`.
+                  :func:`save_comparison_grid` (keys: ``"noisy"``,
+                  ``"single"``, ``"temporal"``, ``"clean"``).
         out_path: Destination PNG path.
     """
     n_rows  = len(samples)
@@ -358,7 +357,6 @@ if __name__ == "__main__":
         return {
             "clean":    clean,
             "noisy":    np.clip(clean + 0.15 * rng.standard_normal((128, 128)).astype("float32"), 0, 1),
-            "nlm":      np.clip(clean + 0.08 * rng.standard_normal((128, 128)).astype("float32"), 0, 1),
             "single":   np.clip(clean + 0.04 * rng.standard_normal((128, 128)).astype("float32"), 0, 1),
             "temporal": np.clip(clean + 0.03 * rng.standard_normal((128, 128)).astype("float32"), 0, 1),
         }
@@ -382,17 +380,14 @@ if __name__ == "__main__":
         csv_path = tmp / "eval_summary.csv"
         rows = [
             ("low25", "noisy",    24.3, 1.1, 0.712, 0.020, 0.0),
-            ("low25", "nlm",      28.1, 0.9, 0.801, 0.015, 12.4),
-            ("low25", "single",   33.2, 0.8, 0.901, 0.010,  2.1),
-            ("low25", "temporal", 34.5, 0.7, 0.918, 0.009,  3.8),
+            ("low25", "single",   33.2, 0.8, 0.901, 0.010, 2.1),
+            ("low25", "temporal", 34.5, 0.7, 0.918, 0.009, 3.8),
             ("low10", "noisy",    21.1, 1.2, 0.680, 0.022, 0.0),
-            ("low10", "nlm",      25.6, 1.0, 0.772, 0.018, 12.4),
-            ("low10", "single",   30.1, 0.9, 0.875, 0.012,  2.1),
-            ("low10", "temporal", 31.8, 0.8, 0.891, 0.011,  3.8),
+            ("low10", "single",   30.1, 0.9, 0.875, 0.012, 2.1),
+            ("low10", "temporal", 31.8, 0.8, 0.891, 0.011, 3.8),
             ("low5",  "noisy",    18.4, 1.3, 0.640, 0.025, 0.0),
-            ("low5",  "nlm",      22.9, 1.1, 0.740, 0.021, 12.4),
-            ("low5",  "single",   27.3, 1.0, 0.845, 0.015,  2.1),
-            ("low5",  "temporal", 29.0, 0.9, 0.862, 0.013,  3.8),
+            ("low5",  "single",   27.3, 1.0, 0.845, 0.015, 2.1),
+            ("low5",  "temporal", 29.0, 0.9, 0.862, 0.013, 3.8),
         ]
         with csv_path.open("w", newline="") as f:
             w = __import__("csv").writer(f)
