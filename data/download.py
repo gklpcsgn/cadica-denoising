@@ -30,6 +30,8 @@ from pathlib import Path
 
 DATASET_SLUG = "arejimenezpartinen/cadica"
 
+CADICA_ROOT = Path("data/archive/CADICA a new dataset for coronary artery disease/CADICA/CADICA")
+
 
 def download_cadica(dest: str | Path = "data/cadica") -> Path:
     """Download and unzip the CADICA dataset using the Kaggle CLI.
@@ -62,7 +64,7 @@ def download_cadica(dest: str | Path = "data/cadica") -> Path:
 # ---------------------------------------------------------------------------
 
 def patient_level_split(
-    data_dir: str | Path,
+    data_dir: str | Path = CADICA_ROOT / "selectedVideos",
     val_ratio: float = 0.15,
     test_ratio: float = 0.15,
     seed: int = 42,
@@ -73,15 +75,18 @@ def patient_level_split(
     leakage: frames from the same patient are highly correlated, so mixing
     them across splits inflates val/test metrics.
 
-    CADICA folder layout::
+    CADICA folder layout (selectedVideos only)::
 
         <data_dir>/
-            patientXX/
-                videoXX/
-                    frameXXXX.png
+            p1/
+                v7/
+                    input/
+                        p1_v7_00001.png
+            p2/
+                ...
 
     Args:
-        data_dir:   Root of the extracted CADICA dataset.
+        data_dir:   Root of selectedVideos (p1, p2, ... folders live here).
         val_ratio:  Fraction of patients reserved for validation.
         test_ratio: Fraction of patients reserved for testing.
         seed:       Random seed for reproducible shuffling.
@@ -144,7 +149,7 @@ def save_split(split: dict[str, list[Path]], out_file: str | Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Download CADICA and create patient-level split.")
-    parser.add_argument("--dest",          default="data/cadica",    help="Dataset root directory")
+    parser.add_argument("--dest",          default="data/archive/CADICA a new dataset for coronary artery disease/CADICA/CADICA/selectedVideos",    help="selectedVideos root directory")
     parser.add_argument("--split-out",     default="data/split.json", help="Where to save the split JSON")
     parser.add_argument("--val-ratio",     type=float, default=0.15)
     parser.add_argument("--test-ratio",    type=float, default=0.15)

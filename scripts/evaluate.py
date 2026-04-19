@@ -54,7 +54,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Evaluate DnCNN denoising on the CADICA test split.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--data-dir",           default="data/cadica",    help="Root CADICA directory")
+    p.add_argument("--data-dir",           default="data/archive/CADICA a new dataset for coronary artery disease/CADICA/CADICA/selectedVideos",    help="Root CADICA directory")
     p.add_argument("--split-json",         default="data/split.json", help="Patient-level split file")
     p.add_argument("--dose",               choices=["low25", "low10", "low5"], default="low25")
     p.add_argument("--depth",              type=int, default=17,      help="DnCNN depth (conv layers)")
@@ -229,7 +229,7 @@ def _load_model(
             stacklevel=2,
         )
         return None
-    ckpt  = torch.load(ckpt_path, map_location=device)
+    ckpt  = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = build_dncnn(mode=mode, depth=depth).to(device)
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()

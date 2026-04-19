@@ -49,12 +49,17 @@ from data.noise import add_poisson_gaussian_noise, DOSE_LEVELS
 # ---------------------------------------------------------------------------
 
 def _collect_videos(patient_dirs: list[Path]) -> list[Path]:
-    """Return sorted list of all video directories across the given patients."""
+    """Return sorted list of input/ subdirs for all videos across the given patients.
+
+    Layout: patient_dir/vX/input/*.png
+    """
     videos: list[Path] = []
     for p in patient_dirs:
         for v in sorted(p.iterdir()):
             if v.is_dir():
-                videos.append(v)
+                input_dir = v / "input"
+                if input_dir.is_dir():
+                    videos.append(input_dir)
     return videos
 
 
@@ -252,16 +257,16 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         # Fake CADICA layout: 3 patients, 1 video each, 6 frames each
-        for pid in ["patient01", "patient02", "patient03"]:
-            video_dir = root / pid / "video01"
-            video_dir.mkdir(parents=True)
+        for pid in ["p1", "p2", "p3"]:
+            input_dir = root / pid / "v1" / "input"
+            input_dir.mkdir(parents=True)
             for i in range(6):
                 arr = rng.integers(0, 256, (64, 64), dtype=np.uint8)
                 PILImage.fromarray(arr, mode="L").save(
-                    video_dir / f"frame{i:04d}.png"
+                    input_dir / f"frame{i:04d}.png"
                 )
 
-        patients = [root / p for p in ["patient01", "patient02", "patient03"]]
+        patients = [root / p for p in ["p1", "p2", "p3"]]
 
         # SingleFrameDataset
         ds = SingleFrameDataset(patients, dose_level="low25", patch_size=32, patches_per_frame=4)

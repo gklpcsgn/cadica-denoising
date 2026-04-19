@@ -60,7 +60,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Train DnCNN on the CADICA coronary angiography dataset.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--data-dir",           default="data/cadica",   help="Root CADICA directory")
+    p.add_argument("--data-dir",           default="data/archive/CADICA a new dataset for coronary artery disease/CADICA/CADICA/selectedVideos",   help="Root CADICA directory")
     p.add_argument("--split-json",         default="data/split.json", help="Patient-level split file")
     p.add_argument("--mode",               choices=["single", "temporal"], default="single",
                    help="'single' → SingleFrameDataset; 'temporal' → TemporalDataset")
