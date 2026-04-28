@@ -21,12 +21,7 @@ data/split.json
 noise_preview.png
 *.zip
 
-# Checkpoints & logs
-checkpoints/
-runs/
-*.pt
-*.pth
-*.ckpt
+
 
 # Jupyter
 .ipynb_checkpoints/
